@@ -1,0 +1,22 @@
+{
+  "name": "ubxview",
+  "version": "1.0.0",
+  "description": "A Tauri app to visualize .ubx file data using three.js.",
+  "main": "main.js",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "keywords": [
+    "Tauri",
+    "three.js",
+    "UBX"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.128.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.0.0"
+  }
+}

@@ -1,3 +1,6 @@
+// main.js - This file contains your renderer logic.
+// It imports the parser, so it's loaded as a module in index.html.
+
 import { extractGpsPointsFromText } from './parser.js';
 
 let rendererInstance = null;
@@ -5,7 +8,7 @@ let labelRendererInstance = null;
 let compassLabels = [];
 
 function init(points, bounds, center) {
-    // Cleanup previous scene
+    // Cleanup previous scene to allow loading new files
     if (rendererInstance) {
         document.body.removeChild(rendererInstance.domElement);
         rendererInstance.dispose();
@@ -25,6 +28,7 @@ function init(points, bounds, center) {
     document.body.appendChild(renderer.domElement);
     rendererInstance = renderer;
 
+    // THREE.CSS2DRenderer is available globally from the script tag in index.html
     const labelRenderer = new THREE.CSS2DRenderer();
     labelRenderer.setSize(window.innerWidth, window.innerHeight);
     labelRenderer.domElement.style.position = 'absolute';
@@ -33,6 +37,7 @@ function init(points, bounds, center) {
     document.body.appendChild(labelRenderer.domElement);
     labelRendererInstance = labelRenderer;
 
+    // --- Camera Controls ---
     let isMouseDown = false;
     let isPanning = false;
     let mouseX = 0, mouseY = 0;
@@ -51,10 +56,10 @@ function init(points, bounds, center) {
 
     document.addEventListener('mousedown', (e) => {
         isMouseDown = true;
-        isPanning = e.shiftKey || e.button === 1;
+        isPanning = e.shiftKey || e.button === 1; // Middle mouse button also pans
         mouseX = e.clientX;
         mouseY = e.clientY;
-        if (e.button === 1) e.preventDefault();
+        if (e.button === 1) e.preventDefault(); // Prevent default middle-click scroll
     });
     document.addEventListener('mouseup', () => {
         isMouseDown = false;
@@ -76,7 +81,7 @@ function init(points, bounds, center) {
         } else {
             cameraAngleY += deltaX * 0.01;
             cameraAngleX += deltaY * 0.01;
-            cameraAngleX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraAngleX));
+            cameraAngleX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraAngleX)); // Clamp vertical rotation
         }
 
         mouseX = e.clientX;
@@ -86,12 +91,13 @@ function init(points, bounds, center) {
 
     document.addEventListener('wheel', (e) => {
         cameraDistance += e.deltaY * 0.5;
-        cameraDistance = Math.max(50, cameraDistance);
+        cameraDistance = Math.max(50, cameraDistance); // Prevent zooming too close
         updateCameraPosition();
     });
 
     document.addEventListener('contextmenu', (e) => e.preventDefault());
 
+    // --- Scene Setup ---
     scene.add(new THREE.AmbientLight(0x404040, 1));
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(100, 100, 50);
@@ -101,9 +107,9 @@ function init(points, bounds, center) {
     function gpsToCartesian(lat, lon, alt) {
         const centerLatRad = center.lat * Math.PI / 180;
         const x = ((lon - center.lon) * Math.cos(centerLatRad) * 111320) * scaleFactor;
-        const y = (alt - center.alt) * 5;
+        const y = (alt - center.alt) * 5; // Vertical exaggeration
         const z = ((lat - center.lat) * 111320) * scaleFactor;
-        return new THREE.Vector3(x, y, -z);
+        return new THREE.Vector3(x, y, -z); // Negate Z to align with compass
     }
 
     const positions = [];
@@ -112,7 +118,7 @@ function init(points, bounds, center) {
         const pos = gpsToCartesian(p.lat, p.lon, p.alt);
         positions.push(pos.x, pos.y, pos.z);
         const altRatio = (p.alt - bounds.minAlt) / (bounds.maxAlt - bounds.minAlt) || 0;
-        const color = new THREE.Color().setHSL(0.7 - altRatio * 0.7, 1.0, 0.8);
+        const color = new THREE.Color().setHSL(0.7 - altRatio * 0.7, 1.0, 0.8); // Color by altitude
         colors.push(color.r, color.g, color.b);
     });
 
@@ -133,10 +139,7 @@ function init(points, bounds, center) {
     const gridSize = Math.max(1000, dataSpan * 1.2);
 
     const gridMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            uCameraPos: { value: new THREE.Vector3() },
-            uGridColor: { value: new THREE.Color(0x444444) },
-        },
+        uniforms: { uGridColor: { value: new THREE.Color(0x444444) } },
         vertexShader: `
             varying vec3 vWorldPos;
             void main() {
@@ -168,12 +171,12 @@ function init(points, bounds, center) {
 
     function createAxisLabel(text, position) {
         const div = document.createElement('div');
-        div.className = 'compass-label';
+        div.className = 'compass-label'; // You will need to style this in your style.css
         div.textContent = text;
         const label = new THREE.CSS2DObject(div);
         label.position.copy(position);
         scene.add(label);
-        compassLabels.push(label); // track for cleanup
+        compassLabels.push(label);
     }
 
     const labelDist = gridSize / 2 * 1.05;
@@ -188,7 +191,6 @@ function init(points, bounds, center) {
 
     function animate() {
         requestAnimationFrame(animate);
-        gridMaterial.uniforms.uCameraPos.value.copy(camera.position);
         renderer.render(scene, camera);
         labelRenderer.render(scene, camera);
     }
@@ -209,20 +211,25 @@ document.getElementById('fileInput').addEventListener('change', async (event) =>
     const file = event.target.files[0];
     if (!file) return;
 
+    const fileLabel = document.getElementById('fileLabel');
+    if (fileLabel) {
+        // Just show the filename, not the whole SVG again
+        fileLabel.innerHTML = file.name;
+    }
+
     const text = await file.text();
     const points = extractGpsPointsFromText(text);
-    if (!points.length) return alert("No GPS points found.");
+    if (!points.length) {
+        alert("No valid GPS points found in the file.");
+        return;
+    }
 
     const bounds = points.reduce((acc, p) => ({
-        minLat: Math.min(acc.minLat, p.lat),
-        maxLat: Math.max(acc.maxLat, p.lat),
-        minLon: Math.min(acc.minLon, p.lon),
-        maxLon: Math.max(acc.maxLon, p.lon),
-        minAlt: Math.min(acc.minAlt, p.alt),
-        maxAlt: Math.max(acc.maxAlt, p.alt),
+        minLat: Math.min(acc.minLat, p.lat), maxLat: Math.max(acc.maxLat, p.lat),
+        minLon: Math.min(acc.minLon, p.lon), maxLon: Math.max(acc.maxLon, p.lon),
+        minAlt: Math.min(acc.minAlt, p.alt), maxAlt: Math.max(acc.maxAlt, p.alt),
     }), {
-        minLat: Infinity, maxLat: -Infinity,
-        minLon: Infinity, maxLon: -Infinity,
+        minLat: Infinity, maxLat: -Infinity, minLon: Infinity, maxLon: -Infinity,
         minAlt: Infinity, maxAlt: -Infinity,
     });
 
