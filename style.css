@@ -1,0 +1,120 @@
+body {
+    margin: 0;
+    font-family: mono-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #050505;
+    color: #eee;
+    overflow: hidden; /* Prevent scrollbars on the page itself */
+}
+
+#info,
+#stats {
+  position: absolute;
+  padding: 12px 18px;
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0.6), rgba(48, 48, 48, 0.4));
+  border: 1px solid rgba(179, 179, 179, 0.08);
+  border-radius: 3px;
+  font-size: .75rem;
+  color: white;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  transition: all 0.2s ease-in-out;
+}
+
+h1 {
+  margin: 0em 0 0.3em 0;
+  padding: 0;
+  text-align: left;
+}
+
+h2,h3 {
+  margin: 0.3em 0 0.3em 0;
+  padding: 0;
+  text-align: left;
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+}
+
+.logo {
+  width: 24px;
+  height: 24px;
+  margin: 0em 0 0.3em 0;
+}
+
+.logo-title h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.version {
+  margin-left: auto;
+  font-size: 1em;
+  opacity: 0.7;
+}
+
+a {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+#info {
+    width: 200px;
+    top: 20px;
+    left: 20px;
+}
+
+.custom-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #d49c00;
+  flex-grow: 1;
+  padding: .5em 1em;
+  cursor: pointer;
+  border: none;
+
+  border-radius: 1px;
+  transition: background-color 0.2s;
+
+}
+
+.custom-file:hover {
+  background-color: #8f6900;
+  color: #eee;
+  border-color: #ffffff66;
+}
+
+.custom-file svg {
+  vertical-align: middle;
+  margin-left: 0.3rem;
+  display: inline-block;
+  transform: translateY(-1px);
+}
+
+
+#stats {
+    top: 20px;
+    right: 20px;
+}
+
+.highlight {
+    font-weight: bold;
+}
+
+/* Style for the N, S, E, W compass labels */
+.compass-label {
+    color: #ffffff;
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 0 0 6px #000000;
+}
